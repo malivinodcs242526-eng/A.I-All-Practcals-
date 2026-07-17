@@ -1,0 +1,239 @@
+import heapq
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
+graph = {
+    'Andheri Railway Station': {'DN Nagar Metro': 3, 'Jogeshwari': 4},
+    'DN Nagar Metro': {'Lokhandwala Circle': 2, 'Versova Metro': 3},
+    'Jogeshwari': {'Lokhandwala Circle': 5},
+    'Lokhandwala Circle': {'Infinity Mall': 2, 'Versova Metro': 3},
+    'Versova Metro': {'Infinity Mall': 2},
+    'Infinity Mall': {}
+}
+
+
+h = {
+    'Andheri Railway Station': 8,
+    'DN Nagar Metro': 5,
+    'Jogeshwari': 6,
+    'Lokhandwala Circle': 2,
+    'Versova Metro': 3,
+    'Infinity Mall': 0
+}
+
+
+pos = {
+    'Andheri Railway Station': (2,8),
+    'DN Nagar Metro': (1,6),
+    'Jogeshwari': (3,6),
+    'Lokhandwala Circle': (1,4),
+    'Versova Metro': (3,4),
+    'Infinity Mall': (2,2)
+}
+
+
+def astar(start, goal):
+    pq = [(h[start], start, [start], 0)]
+    visited = set()
+
+    while pq:
+        f, node, path, g = heapq.heappop(pq)
+
+        if node in visited:
+            continue
+
+        if node == goal:
+            return path, g
+
+        visited.add(node)
+
+        for nxt, cost in graph[node].items():
+            if nxt not in visited:
+                ng = g + cost
+                heapq.heappush(pq, (ng + h[nxt], nxt, path + [nxt], ng))
+
+path, distance = astar('Andheri Railway Station', 'Infinity Mall')
+
+print("Optimal Path Found:")
+print(" -> ".join(path))
+print("\nTotal Distance =", distance, "km")
+
+
+G = nx.DiGraph()
+
+for u in graph:
+    for v, w in graph[u].items():
+        G.add_edge(u, v, weight=w)
+
+plt.figure(figsize=(10,8))
+
+nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=2500)
+nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True)
+
+nx.draw_networkx_edges(
+    G,
+    pos,
+    edgelist=list(zip(path, path[1:])),
+    edge_color='orange',
+    width=4,
+    arrows=True
+)
+
+nx.draw_networkx_labels(
+    G,
+    pos,
+    {n: f"{n}\nh(n)={h[n]}" for n in graph},
+    font_size=9,
+    font_weight='bold'
+)
+
+nx.draw_networkx_edge_labels(
+    G,
+    pos,
+    {(u, v): f"{w} km" for u, v, w in G.edges.data('weight')},
+    font_color='red'
+)
+
+plt.title("A* Search Route\nAndheri Railway Station to Infinity Mall")
+plt.axis("off")
+plt.show()
+
+
+
+
+## RBFS ###
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
+graph = {
+    'Andheri Railway Station': {'Bandra': 10, 'Jogeshwari': 4},
+    'Jogeshwari': {'Bandra': 8},
+    'Bandra': {'Dadar': 9},
+    'Dadar': {'Byculla': 8},
+    'Byculla': {'CST': 5},
+    'CST': {}
+}
+
+
+h = {
+    'Andheri Railway Station': 24,
+    'Jogeshwari': 22,
+    'Bandra': 14,
+    'Dadar': 8,
+    'Byculla': 4,
+    'CST': 0
+}
+
+
+pos = {
+    'Andheri Railway Station': (1,8),
+    'Jogeshwari': (3,7),
+    'Bandra': (2,5),
+    'Dadar': (3,3),
+    'Byculla': (4,2),
+    'CST': (5,1)
+}
+
+
+def rbfs(node, goal, g, limit, path):
+
+    if node == goal:
+        return path, g, g
+
+    s = [[n, g+c, max(g+c+h[n], g+h[node])]
+         for n, c in graph[node].items()]
+
+    if not s:
+        return None, float('inf'), float('inf')
+
+    while True:
+        s.sort(key=lambda x: x[2])
+        best = s[0]
+
+        if best[2] > limit:
+            return None, float('inf'), best[2]
+
+        alt = s[1][2] if len(s) > 1 else float('inf')
+
+        result, dist, best[2] = rbfs(
+            best[0], goal, best[1],
+            min(limit, alt),
+            path + [best[0]]
+        )
+
+        if result:
+            return result, dist, best[2]
+
+
+path, distance, _ = rbfs(
+    'Andheri Railway Station',
+    'CST',
+    0,
+    float('inf'),
+    ['Andheri Railway Station']
+)
+
+print("Optimal Path Found:")
+print(" -> ".join(path))
+print("\nTotal Distance =", distance, "km")
+
+
+G = nx.DiGraph()
+
+for u in graph:
+    for v, w in graph[u].items():
+        G.add_edge(u, v, weight=w)
+
+plt.figure(figsize=(10,8))
+
+nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=2500)
+nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True)
+
+nx.draw_networkx_edges(
+    G, pos,
+    edgelist=list(zip(path, path[1:])),
+    edge_color='green',
+    width=4,
+    arrows=True
+)
+
+nx.draw_networkx_labels(
+    G, pos,
+    {n: f"{n}\nh(n)={h[n]}" for n in graph},
+    font_size=9,
+    font_weight='bold'
+)
+
+nx.draw_networkx_edge_labels(
+    G, pos,
+    {(u,v): f"{w} km" for u,v,w in G.edges.data("weight")},
+    font_color='red'
+)
+
+plt.title("RBFS Route\nAndheri Railway Station to CST")
+plt.axis("off")
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
